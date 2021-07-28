@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+#
+# bookme - interactive
+# (heavily based on github.com/tallguyjenks/.dotfiles/blob/master/scripts/.local/bin/tadd)
+#
+# use: bkme  taskDescription
+#
+
+echo "iCalWizard - Bookme interactive and fuzzy, v1.0"
+echo ""
+#echo ------ $1
+if [ $# -eq 0 ]
+  then
+    echo "USAGE: bkme \"description of the event to book\"..."
+	echo
+    exit
+fi
+#clear
+
+# Utilities vars (for displaying *bold*)
+bold=$(tput bold)
+normal=$(tput sgr0)
+#echo "this is ${bold}bold${normal} but this isn't"
+
+
+# Get the name of the event, unless it was specified as input
+# Use "$@" instead of $1, for all inputs, incl. spaces..
+event_name=$(echo $@)
+
+# Get the duration of the even, or let the user specify a new one
+howLong=$({ echo "[arbitrary]" ; echo -e "15\n20\n30\n45\n60\n90\n120"; } | cat | fzf --preview-window hidden --prompt="howLong (min): (Enter for abritrary) ")
+if [ "$howLong" == "[arbitrary]" ]
+then
+  echo "${bold}How long lasting?${normal} (enter for 5 min)"
+  read -r howLong
+fi
+if [ "$howLong" == "" ]
+then
+  howLong=5
+fi
+#clear
+#-----------------------------------------------------------------------------------
+# Get the horizon days to search for, or let the user specify a new one
+howSoon=$({ echo "[arbitrary]" ; echo -e "3\n7\n14\n21\n30\n45\n60"; } | cat | fzf --preview-window hidden --prompt="howSoon (days): (Enter for abritrary) ")
+if [ "$howSoon" == "[arbitrary]" ]
+then
+  echo "${bold}How soon?${normal} (enter for 5 days)"
+  read -r howSoon
+fi
+if [ "$howSoon" == "" ]
+then
+  howSoon=5
+fi
+#clear
+#-----------------------------------------------------------------------------------
+# Get the priority
+priority=$({ echo -e "1\n2\n3\n4"; } | cat | fzf --preview-window hidden --prompt="Priority (1,2,3,4): (Enter for 1)")
+#clear
+#-----------------------------------------------------------------------------------
+# Get the email for the invitation
+#email=$({ echo -e "[none]\nmaura.arsiero@gmail.com\nmgiugliano@gmail.com\nandrea.stacchetti@sissa.it"; } | cat | fzf --preview-window hidden --prompt="Invite email: (Enter for none) ")
+email=$({ echo -e "[none]" & cat recent_emails.txt; } | cat | fzf --preview-window hidden --prompt="Invite email: (Enter for none) ")
+if [ "$email" == "[none]" ]
+then
+  email=''
+fi
+#clear
+#-----------------------------------------------------------------------------------
+# Putting it all together
+
+# Get the name of the event, unless it was specified as input
+# Use "$@" instead of $1, for all inputs, incl. spaces..
+event_name=$(echo $@)
+
+printf -v create "%s %s %s %s %s\n" "$howLong" "$howSoon" "$priority" "\"$event_name\"" "$email"
+#echo "----------------------------------"
+#echo "./iCalWiz_bookme.py $(echo $create)"
+eval "./iCalWiz_bookme.py $(echo $create)"
